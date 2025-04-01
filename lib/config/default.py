@@ -46,6 +46,7 @@ _C.MODEL.HEATMAP_SIZE = [64, 64]  # width * height, ex: 24 * 32
 _C.MODEL.SIGMA = 2
 _C.MODEL.EXTRA = CN(new_allowed=True)
 <<<<<<< HEAD
+<<<<<<< HEAD
 # _C.MODEL.EXTRA = {
 #     'STAGE2': {
 #         'NUM_BRANCHES': 2,
@@ -55,6 +56,8 @@ _C.MODEL.EXTRA = CN(new_allowed=True)
 #         'FUSE_METHOD': 'SUM',
 #     }
 # }
+=======
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 =======
 >>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 
@@ -138,9 +141,12 @@ _C.DEBUG.SAVE_HEATMAPS_PRED = False
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 =======
 >>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 def update_config(cfg, args):
