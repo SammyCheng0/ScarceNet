@@ -15,17 +15,11 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from tensorboardX import SummaryWriter
-<<<<<<< HEAD
-<<<<<<< HEAD
 import sys
 
 # Add the root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-
+\
 import _init_paths
 from lib.config import cfg
 from lib.config import update_config
@@ -36,19 +30,8 @@ from lib.utils.utils import get_optimizer
 from lib.utils.utils import save_checkpoint
 from lib.utils.utils import create_logger
 from lib.utils.utils import get_model_summary
-<<<<<<< HEAD
-<<<<<<< HEAD
 from lib.models import pose_hrnet_part
 import lib.models 
-# model = pose_hrnet_part.get_pose_net(cfg, is_train=True)
-
-# import lib.models.pose_hrnet_part
-=======
-import lib.models
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-=======
-import lib.models
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 import lib.dataset_animal
 
 def parse_args():
