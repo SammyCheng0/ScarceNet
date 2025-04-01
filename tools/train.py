@@ -15,19 +15,34 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from tensorboardX import SummaryWriter
+<<<<<<< HEAD
+import sys
+
+# Add the root directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+=======
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 
 import _init_paths
-from config import cfg
-from config import update_config
-from core.loss import JointsMSELoss
-from core.function import train
-from core.function import validate
-from utils.utils import get_optimizer
-from utils.utils import save_checkpoint
-from utils.utils import create_logger
-from utils.utils import get_model_summary
-import models
-import dataset_animal
+from lib.config import cfg
+from lib.config import update_config
+from lib.core.loss import JointsMSELoss
+from lib.core.function import train
+from lib.core.function import validate
+from lib.utils.utils import get_optimizer
+from lib.utils.utils import save_checkpoint
+from lib.utils.utils import create_logger
+from lib.utils.utils import get_model_summary
+<<<<<<< HEAD
+from lib.models import pose_hrnet_part
+import lib.models 
+# model = pose_hrnet_part.get_pose_net(cfg, is_train=True)
+
+# import lib.models.pose_hrnet_part
+=======
+import lib.models
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
+import lib.dataset_animal
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train keypoints network')
@@ -122,6 +137,9 @@ def main():
     )
 
     if args.animalpose:
+<<<<<<< HEAD
+        train_dataset = eval('lib.dataset_animal.' + cfg.DATASET.DATASET)(
+=======
         train_dataset = eval('dataset_animal.' + cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
             transforms.Compose([
@@ -129,6 +147,9 @@ def main():
                 normalize,
             ])
         )
+<<<<<<< HEAD
+        valid_dataset = eval('lib.dataset_animal.' + 'ap10k')(
+=======
         valid_dataset = eval('dataset_animal.' + 'ap10k')(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.VAL_SET, False,
             transforms.Compose([
@@ -137,14 +158,22 @@ def main():
             ])
         )
     else:
+<<<<<<< HEAD
+        train_dataset = eval('lib.dataset.'+cfg.DATASET.DATASET)(
+=======
         train_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
             transforms.Compose([
                 transforms.ToTensor(),
                 normalize,
             ])
         )
+<<<<<<< HEAD
+        valid_dataset = eval('lib.dataset.'+cfg.DATASET.DATASET)(
+=======
         valid_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TEST_SET, False,
             transforms.Compose([
                 transforms.ToTensor(),

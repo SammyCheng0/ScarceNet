@@ -16,13 +16,13 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 
 import _init_paths
-from config import cfg
-from config import update_config
-from core.loss import JointsMSELoss
-from core.function import validate
-from utils.utils import create_logger
-import models
-import dataset_animal
+from lib.config import cfg
+from lib.config import update_config
+from lib.core.loss import JointsMSELoss
+from lib.core.function import validate
+from lib.utils.utils import create_logger
+import lib.models
+import lib.dataset_animal
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train keypoints network')
