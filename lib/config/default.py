@@ -45,6 +45,18 @@ _C.MODEL.IMAGE_SIZE = [256, 256]  # width * height, ex: 192 * 256
 _C.MODEL.HEATMAP_SIZE = [64, 64]  # width * height, ex: 24 * 32
 _C.MODEL.SIGMA = 2
 _C.MODEL.EXTRA = CN(new_allowed=True)
+<<<<<<< HEAD
+# _C.MODEL.EXTRA = {
+#     'STAGE2': {
+#         'NUM_BRANCHES': 2,
+#         'NUM_BLOCKS': [4, 4],
+#         'NUM_CHANNELS': [64, 128],
+#         'BLOCK': 'BOTTENECK',
+#         'FUSE_METHOD': 'SUM',
+#     }
+# }
+=======
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 
 _C.LOSS = CN()
 _C.LOSS.USE_OHKM = False
@@ -125,6 +137,12 @@ _C.DEBUG.SAVE_HEATMAPS_GT = False
 _C.DEBUG.SAVE_HEATMAPS_PRED = False
 
 
+<<<<<<< HEAD
+
+
+
+=======
+>>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 def update_config(cfg, args):
     cfg.defrost()
     cfg.merge_from_file(args.cfg)
