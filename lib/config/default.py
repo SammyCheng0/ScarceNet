@@ -19,7 +19,7 @@ _C = CN()
 _C.OUTPUT_DIR = ''
 _C.LOG_DIR = ''
 _C.DATA_DIR = ''
-_C.GPUS = (0,)
+_C.GPUS = [0]
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False
@@ -45,8 +45,6 @@ _C.MODEL.IMAGE_SIZE = [256, 256]  # width * height, ex: 192 * 256
 _C.MODEL.HEATMAP_SIZE = [64, 64]  # width * height, ex: 24 * 32
 _C.MODEL.SIGMA = 2
 _C.MODEL.EXTRA = CN(new_allowed=True)
-<<<<<<< HEAD
-<<<<<<< HEAD
 # _C.MODEL.EXTRA = {
 #     'STAGE2': {
 #         'NUM_BRANCHES': 2,
@@ -56,10 +54,7 @@ _C.MODEL.EXTRA = CN(new_allowed=True)
 #         'FUSE_METHOD': 'SUM',
 #     }
 # }
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
+
 
 _C.LOSS = CN()
 _C.LOSS.USE_OHKM = False
@@ -140,15 +135,6 @@ _C.DEBUG.SAVE_HEATMAPS_GT = False
 _C.DEBUG.SAVE_HEATMAPS_PRED = False
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 def update_config(cfg, args):
     cfg.defrost()
     cfg.merge_from_file(args.cfg)
