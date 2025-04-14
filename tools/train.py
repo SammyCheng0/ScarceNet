@@ -128,16 +128,14 @@ def main():
     )
 
     if args.animalpose:
-        # change dataset
-        train_dataset = eval('lib.dataset_animal.' + cfg.DATASET.DATASET)(
+        train_dataset = eval('dataset_animal.' + cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
             transforms.Compose([
                 transforms.ToTensor(),
                 normalize,
             ])
         )
-        # change dataset
-        valid_dataset = eval('lib.dataset_animal.' + 'ap10k')(
+        valid_dataset = eval('dataset_animal.' + 'ap10k')(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.VAL_SET, False,
             transforms.Compose([
                 transforms.ToTensor(),
@@ -145,16 +143,14 @@ def main():
             ])
         )
     else:
-        # change dataset
-        train_dataset = eval('lib.dataset.'+cfg.DATASET.DATASET)(
+        train_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
             transforms.Compose([
                 transforms.ToTensor(),
                 normalize,
             ])
         )
-        # change dataset
-        valid_dataset = eval('lib.dataset.'+cfg.DATASET.DATASET)(
+        valid_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TEST_SET, False,
             transforms.Compose([
                 transforms.ToTensor(),
