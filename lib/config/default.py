@@ -19,7 +19,7 @@ _C = CN()
 _C.OUTPUT_DIR = ''
 _C.LOG_DIR = ''
 _C.DATA_DIR = ''
-_C.GPUS = (0,)
+_C.GPUS = [0]
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False
@@ -38,15 +38,15 @@ _C.MODEL = CN()
 _C.MODEL.NAME = 'pose_hrnet'
 _C.MODEL.INIT_WEIGHTS = True
 _C.MODEL.PRETRAINED = ''
+# total number of points that will be predicted
 _C.MODEL.NUM_JOINTS = 17
 _C.MODEL.TAG_PER_JOINT = True
 _C.MODEL.TARGET_TYPE = 'gaussian'
-_C.MODEL.IMAGE_SIZE = [256, 256]  # width * height, ex: 192 * 256
-_C.MODEL.HEATMAP_SIZE = [64, 64]  # width * height, ex: 24 * 32
+# change image size and heatmap size
+_C.MODEL.IMAGE_SIZE = [256, 192]  # width * height, ex: 192 * 256
+_C.MODEL.HEATMAP_SIZE = [64, 48]  # width * height, ex: 24 * 32
 _C.MODEL.SIGMA = 2
 _C.MODEL.EXTRA = CN(new_allowed=True)
-<<<<<<< HEAD
-<<<<<<< HEAD
 # _C.MODEL.EXTRA = {
 #     'STAGE2': {
 #         'NUM_BRANCHES': 2,
@@ -56,10 +56,7 @@ _C.MODEL.EXTRA = CN(new_allowed=True)
 #         'FUSE_METHOD': 'SUM',
 #     }
 # }
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
+
 
 _C.LOSS = CN()
 _C.LOSS.USE_OHKM = False
@@ -74,7 +71,7 @@ _C.DATASET.DATASET = 'mpii'
 _C.DATASET.TRAIN_SET = 'train'
 _C.DATASET.TEST_SET = 'test'
 _C.DATASET.VAL_SET = 'val'
-_C.DATASET.DATA_FORMAT = 'jpg'
+_C.DATASET.DATA_FORMAT = 'png'
 _C.DATASET.HYBRID_JOINTS_TYPE = ''
 _C.DATASET.SELECT_DATA = False
 _C.DATASET.SUPERCATEGORY = []
@@ -100,8 +97,9 @@ _C.TRAIN.NESTEROV = False
 _C.TRAIN.GAMMA1 = 0.99
 _C.TRAIN.GAMMA2 = 0.0
 
+# total amount of epochs
 _C.TRAIN.BEGIN_EPOCH = 0
-_C.TRAIN.END_EPOCH = 140
+_C.TRAIN.END_EPOCH = 140 
 
 _C.TRAIN.RESUME = False
 _C.TRAIN.CHECKPOINT = ''
@@ -140,15 +138,6 @@ _C.DEBUG.SAVE_HEATMAPS_GT = False
 _C.DEBUG.SAVE_HEATMAPS_PRED = False
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-=======
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
 def update_config(cfg, args):
     cfg.defrost()
     cfg.merge_from_file(args.cfg)

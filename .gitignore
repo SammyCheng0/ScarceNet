@@ -1,0 +1,13 @@
+*.pyc
+*.log
+build/
+.env
+temp/
+*.json
+*.jpg
+*.Identifier
+LICENSE
+*.png
+*.md
+*.h
+

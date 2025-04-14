@@ -4,7 +4,7 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 DATA_DIR: ''
-GPUS: (0, 1)
+GPUS: [0]
 OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
@@ -30,16 +30,7 @@ MODEL:
   INIT_WEIGHTS: true
   NAME: pose_hrnet
   NUM_JOINTS: 17
-<<<<<<< HEAD
-<<<<<<< HEAD
-  # PRETRAINED: 'models/pytorch/imagenet/hrnet_w32-36af842e.pth'
-  PRETRAINED: ''
-=======
-  PRETRAINED: 'models/pytorch/imagenet/hrnet_w32-36af842e.pth'
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
-=======
-  PRETRAINED: 'models/pytorch/imagenet/hrnet_w32-36af842e.pth'
->>>>>>> ed363e3f674892a34f8c206d1582d64418435320
+  PRETRAINED: 'lib/models/imagenet/hrnet_w32-36af842e.pth'
   TARGET_TYPE: gaussian
   IMAGE_SIZE:
   - 256
