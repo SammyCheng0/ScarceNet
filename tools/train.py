@@ -20,6 +20,7 @@ import sys
 # Add the root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+
 import _init_paths
 from lib.config import cfg
 from lib.config import update_config
@@ -101,6 +102,7 @@ def main():
     torch.backends.cudnn.enabled = cfg.CUDNN.ENABLED
 
     model = eval('lib.models.'+cfg.MODEL.NAME+'.get_pose_net')(
+    model = eval('lib.models.'+cfg.MODEL.NAME+'.get_pose_net')(
         cfg, is_train=True
     )
 
@@ -128,14 +130,16 @@ def main():
     )
 
     if args.animalpose:
-        train_dataset = eval('dataset_animal.' + cfg.DATASET.DATASET)(
+        # change dataset
+        train_dataset = eval('lib.dataset_animal.' + cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
             transforms.Compose([
                 transforms.ToTensor(),
                 normalize,
             ])
         )
-        valid_dataset = eval('dataset_animal.' + 'ap10k')(
+        # change dataset
+        valid_dataset = eval('lib.dataset_animal.' + 'ap10k')(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.VAL_SET, False,
             transforms.Compose([
                 transforms.ToTensor(),
@@ -143,14 +147,16 @@ def main():
             ])
         )
     else:
-        train_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
+        # change dataset
+        train_dataset = eval('lib.dataset.'+cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
             transforms.Compose([
                 transforms.ToTensor(),
                 normalize,
             ])
         )
-        valid_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
+        # change dataset
+        valid_dataset = eval('lib.dataset.'+cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TEST_SET, False,
             transforms.Compose([
                 transforms.ToTensor(),
@@ -255,12 +261,59 @@ def main():
     # torch.save(model.module.state_dict(), final_model_state_file)
     # writer_dict['writer'].close()
 
+    # # train
+    # for epoch in range(begin_epoch, cfg.TRAIN.END_EPOCH):
+    #     lr_scheduler.step()
+
+    #     # train for one epoch
+    #     train(cfg, train_loader, model, criterion, optimizer, epoch,
+    #           final_output_dir, tb_log_dir, writer_dict)
+
+    #     # evaluate on validation set
+    #     perf_indicator = validate(
+    #         cfg, valid_loader, valid_dataset, model, criterion,
+    #         final_output_dir, tb_log_dir, writer_dict, args.animalpose
+    #     )
+
+    #     if perf_indicator >= best_perf:
+    #         best_perf = perf_indicator
+    #         best_model = True
+    #         best_perf_epoch = epoch + 1
+    #     else:
+    #         best_model = False
+
+    #     logger.info('=> saving checkpoint to {}'.format(final_output_dir))
+    #     save_checkpoint({
+    #         'epoch': epoch + 1,
+    #         'model': cfg.MODEL.NAME,
+    #         'state_dict': model.module.state_dict(),
+    #         'perf': perf_indicator,
+    #         'optimizer': optimizer.state_dict(),
+    #     }, best_model, final_output_dir)
+
+    # final_model_state_file = os.path.join(
+    #     final_output_dir, 'final_state.pth'
+    # )
+    # logger.info('=> saving final model state to {}'.format(
+    #     final_model_state_file)
+    # )
+    # logger.info('Best accuracy {} at epoch {}'.format(best_perf, best_perf_epoch))
+    # torch.save(model.module.state_dict(), final_model_state_file)
+    # writer_dict['writer'].close()
+
     # train
     for epoch in range(begin_epoch, cfg.TRAIN.END_EPOCH):
+        
         
         # train for one epoch
         train(cfg, train_loader, model, criterion, optimizer, epoch,
               final_output_dir, tb_log_dir, writer_dict)
+        
+        # Step optimizer first
+        optimizer.step()
+        
+        # Then update learning rate
+        lr_scheduler.step()
         
         # Step optimizer first
         optimizer.step()
