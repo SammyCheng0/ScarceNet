@@ -7,10 +7,14 @@ import time
 import logging
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
 
 from core.evaluate import accuracy
 from core.inference import get_final_preds
 from utils.transforms import flip_back
+from utils.vis_skeleton import cv2_visualize_keypoints
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,6 +24,8 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
     data_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
+    rmse_student = AverageMeter()
+    rmse_teacher = AverageMeter()
 
     # switch to train mode
     model.train()
@@ -59,6 +65,15 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
         end = time.time()
 
         if i % config.PRINT_FREQ == 0:
+            # msg = 'Epoch: [{0}][{1}/{2}]\t' \
+            #       'Time {batch_time.val:.3f}s ({batch_time.avg:.3f}s)\t' \
+            #       'Speed {speed:.1f} samples/s\t' \
+            #       'Data {data_time.val:.3f}s ({data_time.avg:.3f}s)\t' \
+            #       'Loss {loss.val:.5f} ({loss.avg:.5f})\t' \
+            #       'Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(
+            #           epoch, i, len(train_loader), batch_time=batch_time,
+            #           speed=input.size(0)/batch_time.val,
+            #           data_time=data_time, loss=losses, acc=acc)
             msg = 'Epoch: [{0}][{1}/{2}]\t' \
                   'Time {batch_time.val:.3f}s ({batch_time.avg:.3f}s)\t' \
                   'Speed {speed:.1f} samples/s\t' \
@@ -78,10 +93,12 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
 
 
 def validate(config, val_loader, val_dataset, model, criterion, output_dir,
-             tb_log_dir, writer_dict=None, animalpose=False, vis=False):
+             tb_log_dir, writer_dict=None, animalpose=False, vis=True):
     batch_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
+    rmse_student = AverageMeter()
+    rmse_teacher = AverageMeter()
 
     # switch to evaluate mode
     model.eval()
@@ -96,6 +113,7 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
     filenames = []
     imgnums = []
     idx = 0
+
 
     with torch.no_grad():
         end = time.time()
@@ -159,9 +177,14 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
             all_boxes[idx:idx + num_images, 4] = np.prod(s*200, 1)
             all_boxes[idx:idx + num_images, 5] = score
 
+            # savepath = "/home/sammych/ScarceNet/output/output_animal_hrnet5_part/results"
+            savepath = "output/output_animal_hrnet5_part/results"
+
             if animalpose:
                 bbox_ids = meta['bbox_id'].numpy()
                 all_boxes[idx:idx + num_images, 6] = bbox_ids
+            if vis:
+                cv2_visualize_keypoints(input, pred *4, savepath, idx)
 
             image_path.extend(meta['image'])
             idx += num_images
@@ -219,12 +242,15 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
 
 # evaluate both student and teacher models
 def validate_mt(config, val_loader, val_dataset, model, model_ema, criterion, output_dir,
-             tb_log_dir, writer_dict=None, animalpose=False):
+             tb_log_dir, writer_dict=None, animalpose=False, vis=True):
     batch_time = AverageMeter()
     losses_sup = AverageMeter()
     losses_const = AverageMeter()
     acc = AverageMeter()
     acc_ema = AverageMeter()
+    rmse_student = AverageMeter()
+    rmse_teacher = AverageMeter()
+
     # switch to evaluate mode
     model.eval()
     model_ema.eval()
@@ -289,6 +315,10 @@ def validate_mt(config, val_loader, val_dataset, model, model_ema, criterion, ou
             loss_sup = criterion(output, target, target_weight)
             loss_const =criterion(output, output_ema, const_weight)
             num_images = input.size(0)
+
+            savepath = "output/output_animal_hrnet5_part/results_student_teacher"
+            if vis:
+                cv2_visualize_keypoints(input, pred *4, savepath, idx)
             # measure accuracy and record loss
             losses_sup.update(loss_sup.item(), num_images)
             losses_const.update(loss_const.item(), num_images)
@@ -296,7 +326,7 @@ def validate_mt(config, val_loader, val_dataset, model, model_ema, criterion, ou
                                              target.cpu().numpy())
             _, avg_acc_ema, cnt_ema, pred_ema = accuracy(output_ema.cpu().numpy(),
                                                          target.cpu().numpy())
-
+            
             acc.update(avg_acc, cnt)
             acc_ema.update(avg_acc_ema, cnt_ema)
             # measure elapsed time
@@ -306,9 +336,25 @@ def validate_mt(config, val_loader, val_dataset, model, model_ema, criterion, ou
             c = meta['center'].numpy()
             s = meta['scale'].numpy()
             score = meta['score'].numpy()
-
+            
             preds, maxvals = get_final_preds(
                 config, output.clone().cpu().numpy(), c, s)
+            
+            preds_ema, maxvals_ema = get_final_preds(
+                config, output_ema.clone().cpu().numpy(), c, s)
+
+            # Decode ground-truth keypoints
+            target_coords, _ = get_final_preds(config, target.cpu().numpy(), c, s)
+
+            # Compute RMSE
+            rmse_batch = np.sqrt(np.mean((preds[:, :, 0:2] - target_coords[:, :, 0:2]) ** 2))
+            rmse_student.update(rmse_batch, num_images)
+
+            rmse_batch_ema = np.sqrt(np.mean((preds_ema[:, :, 0:2] - target_coords[:, :, 0:2]) ** 2))
+            rmse_teacher.update(rmse_batch_ema, num_images)
+
+            rmse_jointwise = np.sqrt(np.mean((preds[:, :, 0:2] - target_coords[:, :, 0:2]) ** 2, axis=0))  # shape: (num_joints, 2)
+
 
             all_preds[idx:idx + num_images, :, 0:2] = preds[:, :, 0:2]
             all_preds[idx:idx + num_images, :, 2:3] = maxvals
@@ -391,6 +437,27 @@ def validate_mt(config, val_loader, val_dataset, model, model_ema, criterion, ou
                     global_steps
                 )
             writer_dict['valid_global_steps'] = global_steps + 1
+
+            # # ---- Optional: Plot and Save Joint-wise RMSE ----
+            # num_joints = rmse_jointwise.shape[0]
+            # joint_indices = np.arange(num_joints)
+            # rmse_jointwise_total = np.sqrt(np.mean((all_preds[:, :, 0:2] - all_preds_ema[:, :, 0:2]) ** 2, axis=0))
+            # rmse_jointwise_per_joint = np.linalg.norm(rmse_jointwise_total, axis=1)
+
+            # plt.figure(figsize=(12, 6))
+            # plt.bar(joint_indices, rmse_jointwise_per_joint)
+            # plt.xlabel('Joint Index')
+            # plt.ylabel('RMSE')
+            # plt.title('Joint-wise RMSE: Student vs Teacher')
+            # plt.grid(True)
+            # plt.tight_layout()
+            # plt.savefig(f"{output_dir}/jointwise_rmse.png")
+            # plt.close()
+
+            # # ---- Optional: Log RMSE to TensorBoard ----
+            # if writer_dict:
+            #     for j in range(num_joints):
+            #         writer.add_scalar(f'RMSE/joint_{j}', rmse_jointwise_per_joint[j], global_steps)
 
     return perf_indicator_ema
 
