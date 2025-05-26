@@ -17,19 +17,23 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from tensorboardX import SummaryWriter
 
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import _init_paths
-from config import cfg
-from config import update_config
-from core.loss import JointsMSELoss
-from core.function import validate_mt, AverageMeter, validate
-from core.function1 import train_mt_update
-from utils.utils import get_optimizer
-from utils.utils import save_checkpoint
-from utils.utils import create_logger
-from utils.utils import get_model_summary
-from utils.augmentation_pool import RandAugmentMC
-from utils.consistency import prediction_check
-from core.evaluate import accuracy
+from lib.config import cfg
+from lib.config import update_config
+from lib.core.loss import JointsMSELoss
+from lib.core.function import validate_mt, AverageMeter, validate
+from lib.core.function1 import train_mt_update
+from lib.utils.utils import get_optimizer
+from lib.utils.utils import save_checkpoint
+from lib.utils.utils import create_logger
+from lib.utils.utils import get_model_summary
+from lib.utils.augmentation_pool import RandAugmentMC
+from lib.utils.consistency import prediction_check
+from lib.core.evaluate import accuracy
+from lib.core.evaluate import rmse_metric
 import models
 import dataset_animal
 
@@ -316,10 +320,21 @@ def main():
                         pseudo_kpts[int(meta['index'][i].numpy())] = generated_kpts
                         _, avg_acc, cnt, pred = accuracy(score_map,
                                                          target[i].unsqueeze(0).numpy())
+                        avg_rmse, rmse_per_joint = rmse_metric(pred, target[i].unsqueeze(0).numpy())
+                        
                         acc_pseudol.update(avg_acc, cnt)
+                        
+                        if 'rmse_sum' not in locals():
+                            rmse_sum = 0
+                            rmse_cnt = 0
+                        rmse_sum += avg_rmse * cnt  # accumulate total RMSE
+                        rmse_cnt += cnt
+
+                        avg_total_rmse = rmse_sum / rmse_cnt if rmse_cnt > 0 else 0
+                        print("Average RMSE on training set (pseudo-labels): {:.4f}".format(avg_total_rmse))
                 print("Acc on the training dataset (pseudo-labels): {}".format(acc_pseudol.avg))
                 np.save('data/pseudo_labels/{}shots/pseudo_labels_train.npy'.format(cfg.LABEL_PER_CLASS),
-                            pseudo_kpts)
+                        pseudo_kpts)
                 break
 
             train_dataset = eval('dataset_animal.' + cfg.DATASET.DATASET)(

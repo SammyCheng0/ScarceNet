@@ -15,13 +15,17 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import _init_paths
 from lib.config import cfg
 from lib.config import update_config
 from lib.core.loss import JointsMSELoss
 from lib.core.function import validate
 from lib.utils.utils import create_logger
-import lib.models
+# import lib.models
+from lib.models import pose_hrnet_part
 import lib.dataset_animal
 
 def parse_args():
@@ -80,7 +84,7 @@ def main():
     torch.backends.cudnn.deterministic = cfg.CUDNN.DETERMINISTIC
     torch.backends.cudnn.enabled = cfg.CUDNN.ENABLED
 
-    model = eval('models.'+cfg.MODEL.NAME+'.get_pose_net')(
+    model = eval('lib.models.'+cfg.MODEL.NAME+'.get_pose_net')(
         cfg, is_train=False
     )
 
@@ -108,7 +112,7 @@ def main():
     )
 
     if args.animalpose:
-        valid_dataset = eval('dataset_animal.' + cfg.DATASET.DATASET)(
+        valid_dataset = eval('lib.dataset_animal.' + cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.VAL_SET, False,
             transforms.Compose([
                 transforms.ToTensor(),
@@ -116,7 +120,7 @@ def main():
             ])
         )
     else:
-        valid_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
+        valid_dataset = eval('lib.dataset.'+cfg.DATASET.DATASET)(
             cfg, cfg.DATASET.ROOT, cfg.DATASET.TEST_SET, False,
             transforms.Compose([
                 transforms.ToTensor(),
@@ -131,6 +135,7 @@ def main():
         pin_memory=True
     )
 
+    
     # evaluate on validation set
     validate(cfg, valid_loader, valid_dataset, model, criterion,
              final_output_dir, tb_log_dir, animalpose=args.animalpose, vis=args.vis)

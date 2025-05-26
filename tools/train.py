@@ -101,9 +101,13 @@ def main():
     torch.backends.cudnn.deterministic = cfg.CUDNN.DETERMINISTIC
     torch.backends.cudnn.enabled = cfg.CUDNN.ENABLED
 
+    # model = eval('lib.models.'+cfg.MODEL.NAME+'.get_pose_net')(
+    # model = eval('lib.models.'+cfg.MODEL.NAME+'.get_pose_net')(
+    #     cfg, is_train=True
+    # )
+
     model = eval('lib.models.'+cfg.MODEL.NAME+'.get_pose_net')(
-    model = eval('lib.models.'+cfg.MODEL.NAME+'.get_pose_net')(
-        cfg, is_train=True
+         cfg, is_train=True
     )
 
     writer_dict = {
