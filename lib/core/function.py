@@ -10,6 +10,7 @@ import torch
 import matplotlib.pyplot as plt
 
 from core.evaluate import accuracy
+from core.evaluate import rmse_metric
 from core.inference import get_final_preds
 from utils.transforms import flip_back
 from utils.vis_skeleton import cv2_visualize_keypoints
@@ -100,14 +101,17 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
     rmse_student = AverageMeter()
     rmse_teacher = AverageMeter()
 
+    all_gts_list = []  # <-- ADD THIS
+
     # switch to evaluate mode
     model.eval()
 
     num_samples = len(val_dataset)
-    all_preds = np.zeros(
-        (num_samples, config.MODEL.NUM_JOINTS, 3),
-        dtype=np.float32
-    )
+    # all_preds = np.zeros(
+    #     (num_samples, config.MODEL.NUM_JOINTS, 3),
+    #     dtype=np.float32
+    # )
+    all_preds = []
     all_boxes = np.zeros((num_samples, 7)) if animalpose else np.zeros((num_samples, 6))
     image_path = []
     filenames = []
@@ -120,6 +124,26 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
         for i, (input, target, target_weight, meta) in enumerate(val_loader):
             # compute output
             outputs, _ = model(input)
+
+            # all_gts_list.append(target.cpu().numpy())  # <-- ADD THIS INSIDE THE LOOP
+            # all_gts_list.append(target[:, :, :, 0].cpu().numpy())  # just an example if heatmaps are (N, joints, H, W)
+            # target shape: (batch_size, num_joints, height, width)
+            target_np = target.cpu().numpy()
+            batch_size, num_joints, h, w = target_np.shape
+
+            # Initialize array for keypoint coordinates: (batch_size, num_joints, 2)
+            gt_coords = np.zeros((batch_size, num_joints, 2), dtype=np.float32)
+
+            for b in range(batch_size):
+                for j in range(num_joints):
+                    heatmap = target_np[b, j, :, :]
+                    # Find argmax position in heatmap (flattened index)
+                    idx = heatmap.argmax()
+                    y, x = np.unravel_index(idx, (h, w))
+                    gt_coords[b, j, :] = [x, y]  # Note order: (x, y)
+
+            all_gts_list.append(gt_coords)
+
             if isinstance(outputs, list):
                 output = outputs[-1]
             else:
@@ -169,8 +193,14 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
             preds, maxvals = get_final_preds(
                 config, output.clone().cpu().numpy(), c, s)
 
-            all_preds[idx:idx + num_images, :, 0:2] = preds[:, :, 0:2]
-            all_preds[idx:idx + num_images, :, 2:3] = maxvals
+            # all_preds[idx:idx + num_images, :, 0:2] = preds[:, :, 0:2]
+            # all_preds[idx:idx + num_images, :, 2:3] = maxvals
+            # Concatenate preds and maxvals to shape (batch_size, num_joints, 3)
+            batch_preds = np.concatenate([preds[:, :, 0:2], maxvals], axis=2)  # shape (batch_size, num_joints, 3)
+            all_preds.append(batch_preds)
+
+
+
             # double check this all_boxes parts
             all_boxes[idx:idx + num_images, 0:2] = c[:, 0:2]
             all_boxes[idx:idx + num_images, 2:4] = s[:, 0:2]
@@ -202,6 +232,43 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
             config, all_preds, output_dir, all_boxes, image_path,
             filenames, imgnums
         )
+        # AFTER THE LOOP
+        # all_gts = np.concatenate(all_gts_list, axis=0)
+        # preds_xy = all_preds[:, :, :2]
+        # gts_xy = all_gts[:, :, :2]
+        
+        all_preds = np.concatenate(all_preds, axis=0)
+        all_gts = np.concatenate(all_gts_list, axis=0)
+        preds_xy = all_preds[:, :, :2]
+
+
+        # print("preds_xy shape:", preds_xy.shape)
+        # print("gts_xy shape:", gts_xy.shape)
+        # assert preds_xy.shape == gts_xy.shape, "Shape mismatch"
+
+        # print("preds_xy contains NaNs:", np.isnan(preds_xy).any())
+        # print("gts_xy contains NaNs:", np.isnan(gts_xy).any())
+
+        # print("preds_xy min/max:", np.min(preds_xy), np.max(preds_xy))
+        # print("gts_xy min/max:", np.min(gts_xy), np.max(gts_xy))
+
+        # print("target shape inside loop:", target.shape)
+
+        all_preds = np.concatenate(all_preds, axis=0)
+
+        all_gts = np.concatenate(all_gts_list, axis=0)
+
+        preds_xy = all_preds[:, :, :2]
+        gts_xy = all_gts
+
+        avg_rmse, rmse_per_joint = rmse_metric(preds_xy, gts_xy)
+        logger.info('RMSE of keypoints (overall): {:.4f}'.format(avg_rmse))
+        logger.info('RMSE per joint: {}'.format(rmse_per_joint))
+
+    if writer_dict:
+        writer = writer_dict['writer']
+        global_steps = writer_dict['valid_global_steps']
+        writer.add_scalar('valid_rmse', avg_rmse, global_steps)
 
         model_name = config.MODEL.NAME
         if isinstance(name_values, list):
